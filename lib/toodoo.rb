@@ -4,11 +4,28 @@ require 'highline/import'
 require 'pry'
 
 module Toodoo
+
   class User < ActiveRecord::Base
+    validates :name, presence: true
+    has_many :lists
+    has_many :items, through :lists
   end
+
+  class List <ActiveRecord::Base
+    validates :list, presence: true
+    belongs_to :user
+    has_many :items
+  end
+
+  class Item <ActiveRecord::Base
+    belongs_to :list
+  end
+
 end
 
 class TooDooApp
+   Include Toodoo
+
   def initialize
     @user = nil
     @todos = nil
@@ -51,30 +68,56 @@ class TooDooApp
   end
 
   def new_todo_list
+    say('Creating a new todo list.')
+    title = ask("What do you want to name your Toodoo list as?")
     # TODO: This should create a new todo list by getting input from the user.
     # The user should not have to tell you their id.
     # Create the todo list in the database and update the @todos variable.
+    @todos = @user.lists.create(:title => title)
   end
 
   def pick_todo_list
     choose do |menu|
+      menu.prompt('Which Toodoo list do you want to use?')
+      @user.list.find_each do |l|
+        menu.choice(l.title.each do |t| @todos.push(t)) { @todos = t }
       # TODO: This should get get the todo lists for the logged in user (@user).
       # Iterate over them and add a menu.choice line as seen under the login method's
       # find_each call. The menu choice block should set @todos to the todo list.
-
+        end
+      end
       menu.choice(:back, "Just kidding, back to the main menu!") do
         say "You got it!"
-        @todos = nil
+      @todos = nil
       end
     end
   end
 
   def delete_todo_list
+    choices = 'yn'
+    delete = ask("Are you *sure* you want to delete this list?") do |q|
+      q.validate =/\A[#{choices}]\Z/
+      q.character = true #why??
+      q.confirm = true
+    end
+      if delete == 'y'
+      list.destroy
+      @todos = nil
+      end
     # TODO: This should confirm that the user wants to delete the todo list.
     # If they do, it should destroy the current todo list and set @todos to nil.
   end
 
   def new_task
+    gets_task = ask("What task would you like to add?")
+    item_name = Toodoo::items.create(:name => gets_task)
+    #review later...
+    due_date = ask("Due date? Select date as DD/MM/YY or hit enter to skip.")
+      case when due_date == ""
+        update table as NULL...
+      case when due_date
+        update table with date
+      end
     # TODO: This should create a new task on the current user's todo list.
     # It must take any necessary input from the user. A due date is optional.
   end
