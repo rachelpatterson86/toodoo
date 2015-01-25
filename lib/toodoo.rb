@@ -110,7 +110,7 @@ class TooDooApp
 
   def new_task
     gets_task = ask("What task would you like to add?")
-    item_name = Toodoo::items.create(:name => gets_task)
+    item_name = @users.items.create(:name => gets_task)
     #review later...
     due_date = ask("Due date? Select date as DD/MM/YY or hit enter to skip.")
       case when due_date == ""
