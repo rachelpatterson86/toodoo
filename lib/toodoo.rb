@@ -1,14 +1,13 @@
 require "toodoo/version"
 require "toodoo/init_db"
 require 'highline/import'
-require 'pry'
+# require 'pry'
 
 module Toodoo
-
   class User < ActiveRecord::Base
     validates :name, presence: true
     has_many :lists
-    has_many :items, through :lists
+    has_many :items, through: :lists
   end
 
   class List <ActiveRecord::Base
@@ -20,11 +19,10 @@ module Toodoo
   class Item <ActiveRecord::Base
     belongs_to :list
   end
-
 end
 
 class TooDooApp
-   Include Toodoo
+   include Toodoo
 
   def initialize
     @user = nil
@@ -79,16 +77,17 @@ class TooDooApp
   def pick_todo_list
     choose do |menu|
       menu.prompt('Which Toodoo list do you want to use?')
+
       @user.list.find_each do |l|
-        menu.choice(l.title.each do |t| @todos.push(t)) { @todos = t }
+        menu.choice(l.title.each { |t| @todos.push(t) }) { @todos = t }
       # TODO: This should get get the todo lists for the logged in user (@user).
       # Iterate over them and add a menu.choice line as seen under the login method's
       # find_each call. The menu choice block should set @todos to the todo list.
-        end
       end
+
       menu.choice(:back, "Just kidding, back to the main menu!") do
         say "You got it!"
-      @todos = nil
+        @todos = nil
       end
     end
   end
@@ -100,10 +99,10 @@ class TooDooApp
       q.character = true #why??
       q.confirm = true
     end
-      if delete == 'y'
+    if delete == 'y'
       list.destroy
       @todos = nil
-      end
+    end
     # TODO: This should confirm that the user wants to delete the todo list.
     # If they do, it should destroy the current todo list and set @todos to nil.
   end
@@ -113,10 +112,11 @@ class TooDooApp
     item_name = @todos.items.create(:name => gets_task)
     # DATES WTF.... *sad panda*
     due_date = ask("Due date? Select date as MM/DD/YYYY or hit enter to skip.")
-      case when due_date == ""
+      case due_date
+      when ""
         item_name.update(dd: NULL)
-      case when due_date == /^(0[1-9]|1[0-2])\/(0[1-9]|1\d|2\d|3[01])\/(19|20)\d{2}$/
-        item_name.update(dd:) ###?????
+      when due_date == /^(0[1-9]|1[0-2])\/(0[1-9]|1\d|2\d|3[01])\/(19|20)\d{2}$/
+        item_name.update(dd: due_date) ###?????
       end
     # TODO: This should create a new task on the current user's todo list.
     # It must take any necessary input from the user. A due date is optional.
@@ -126,10 +126,10 @@ class TooDooApp
   def mark_done
     choose do |menu|
       menu.prompt('Which Toodoo task is done?')
-    @todos.items.find_each do |i|
-      menu.choice(i.name "#{i.name} is done!") #wtf.
-      item_update = @todos.item.find_by(name: i.name)
-      item_update.update(task_done: true)
+      @todos.items.find_each do |i|
+        menu.choice(i.name "#{i.name} is done!") #wtf.
+        item_update = @todos.item.find_by(name: i.name)
+        item_update.update(task_done: true)
     # TODO: This should display the todos on the current list in a menu
     # similarly to pick_todo_list. Once they select a todo, the menu choice block
     # should update the todo to be completed.
@@ -140,8 +140,8 @@ class TooDooApp
   def change_due_date #wtf?
     choose do |menu|
       menu.prompt('What is the new date?')
-    @todos.items.find_each do |i|
-    menu.choice(i.name) { change_due_date }
+      @todos.items.find_each do |i|
+        menu.choice(i.name) { change_due_date }
     # TODO: This should display the todos on the current list in a menu
     # similarly to pick_todo_list. Once they select a todo, the menu choice block
     # should update the due date for the todo. You probably want to use
@@ -150,29 +150,30 @@ class TooDooApp
     end
   end
 
-  def edit_task #no idea... can't think...
-    choose do |menu|
-      menu.prompt('Which Toodoo task needs editing?')
-    menu.choice(:edit_task, "Update a task's description.") { edit_task }
-    @todos.items.find_each do |i|
-      menu.choice(i.name "#{i.name} is done!") #wtf.
-      item_update = @todos.item.find_by(name: i.name)
-      item_update.update(task_done: true)
+    def edit_task #no idea... can't think...
+      choose do |menu|
+        menu.prompt('Which Toodoo task needs editing?')
+        menu.choice(:edit_task, "Update a task's description.") { edit_task }
 
+        @todos.items.find_each do |i|
+          menu.choice(i.name "#{i.name} is done!") #wtf.
+          item_update = @todos.item.find_by(name: i.name)
+          item_update.update(task_done: true)
+        end
+      # TODO: This should display the todos on the current list in a menu
+      # similarly to pick_todo_list. Once they select a todo, the menu choice block
+      # should change the name of the todo.
+      end
+    end
 
-    # TODO: This should display the todos on the current list in a menu
-    # similarly to pick_todo_list. Once they select a todo, the menu choice block
-    # should change the name of the todo.
-  end
-
-#i can't even...
-  def show_overdue
-    menu.choice(:show_overdue, "Show a list of task's that are overdue, oldest first.") { show_overdue }
-    # TODO: This should print a sorted list of todos with a due date *older*
-    # than `Date.now`. They should be formatted as follows:
-    # "Date -- Eat a Cookie"
-    # "Older Date -- Play with Puppies"
-  end
+  #i can't even...
+    def show_overdue
+      menu.choice(:show_overdue, "Show a list of task's that are overdue, oldest first.") { show_overdue }
+      # TODO: This should print a sorted list of todos with a due date *older*
+      # than `Date.now`. They should be formatted as follows:
+      # "Date -- Eat a Cookie"
+      # "Older Date -- Play with Puppies"
+    end
 
   def run
     puts "Welcome to your personal TooDoo app."
@@ -215,7 +216,7 @@ class TooDooApp
   end
 end
 
-binding.pry
+# binding.pry
 
 todos = TooDooApp.new
 todos.run
