@@ -61,13 +61,9 @@ class TooDooApp
   end
 
   def delete_user
-    choices = 'yn'
-    delete = ask("Are you *sure* you want to stop using TooDoo?") do |q|
-      q.validate =/\A[#{choices}]\Z/
-      q.character = true
-      q.confirm = true
-    end
-    if delete == 'y'
+    query = "Are you *sure* you want to stop using TooDoo?"
+
+    if delete_validation(query) == 'y'
       @user.destroy
       @user = nil
     end
@@ -87,10 +83,7 @@ class TooDooApp
         menu.choice(list.title) { @todos = list }
       end
 
-      menu.choice(:back, "Just kidding, back to the main menu!") do
-        say "You got it!"
-        @todos = nil
-      end
+      menu.choice(:back, "Just kidding, back to the main menu!") { back }
     end
   end
 
@@ -100,18 +93,24 @@ class TooDooApp
 
       @user.lists.find_each do |list|
         menu.choice(list.title) do
-          choices = 'yn'
-          delete = ask("Are you *sure* you want to delete this list?") do |q|
-            q.validate =/\A[#{choices}]\Z/
-            q.character = true
-            q.confirm = true
-          end
-          if delete == 'y'
+          query = "Are you *sure* you want to delete this list?"
+
+          if delete_validation(query) == 'y'
             list.destroy
             @todos = nil
           end
         end
       end
+    end
+  end
+
+  def delete_validation(query)
+    choices = 'yn'
+
+    ask(query) do |q|
+      q.validate =/\A[#{choices}]\Z/
+      q.character = true
+      q.confirm = true
     end
   end
 
@@ -187,6 +186,11 @@ class TooDooApp
     @todos.items.done(bool).each { |item| puts item.name }
   end
 
+  def back
+    say "You got it!"
+    @todos = nil
+  end
+
   def run
     say "Welcome to your personal TooDoo app."
     loop do
@@ -216,10 +220,7 @@ class TooDooApp
           menu.choice(:edit_task, "Update a task's description.") { edit_task }
           menu.choice(:show_done, "Toggle display of tasks you've finished.") { show_done }
           menu.choice(:show_overdue, "Show a list of task's that are overdue, oldest first.") { show_overdue }
-          menu.choice(:back, "Go work on another Toodoo list!") do
-            say "You got it!"
-            @todos = nil
-          end
+          menu.choice(:back, "Go work on another Toodoo list!") { back }
         end
 
         menu.choice(:quit, "Quit!") { exit }
