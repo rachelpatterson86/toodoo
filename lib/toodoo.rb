@@ -22,6 +22,10 @@ module Toodoo
 
     scope :overdue, -> (now) { where.not(due_date: nil).where('due_date < ?', now) }
     scope :done, -> (bool) { where(task_done: bool) }
+
+    def update_due_date(due_date)
+      self.update(due_date: due_date)
+    end
   end
 end
 
@@ -112,16 +116,10 @@ class TooDooApp
   end
 
   def new_task
-    gets_task = ask("What task would you like to add?")
-    item_name = @todos.items.create(:name => gets_task)
-    due_date = ask("Due date? Select date as MM/DD/YYYY or hit enter to skip.")
+    task = ask("What task would you like to add?")
+    item = @todos.items.create(:name => task)
 
-    case due_date
-    when ""
-      item_name.update(due_date: nil)
-    when /^(0[1-9]|1[0-2])\/(0[1-9]|1\d|2\d|3[01])\/(19|20)\d{2}$/
-      item.update(due_date: Date.strptime(due_date, '%m/%d/%Y'))
-    end
+    item.update_due_date(new_date)
   end
 
   def mark_done
@@ -142,16 +140,16 @@ class TooDooApp
       menu.prompt = 'Which Toodoo task needs a new date?'
 
       @todos.items.find_each do |item|
-        menu.choice(item.name) do
-          due_date = ask("Due date? Select date as MM/DD/YYYY or hit enter to skip.")
-          case due_date
-          when ""
-            item.update(due_date: nil)
-          when /^(0[1-9]|1[0-2])\/(0[1-9]|1\d|2\d|3[01])\/(19|20)\d{2}$/
-            item.update(due_date: Date.strptime(due_date, '%m/%d/%Y'))
-          end
-        end
+        menu.choice(item.name) { item.update_due_date(new_date) }
       end
+    end
+  end
+
+  def new_date
+    due_date = ask('Select date as MM/DD/YYYY or hit enter to skip.')
+
+    if due_date =~ /^(0[1-9]|1[0-2])\/(0[1-9]|1\d|2\d|3[01])\/(19|20)\d{2}$/
+      Date.strptime(due_date, '%m/%d/%Y')
     end
   end
 
@@ -186,9 +184,7 @@ class TooDooApp
       bool = false
     end
 
-    @todos.items.done(bool).each do |item|
-      puts item.name
-    end
+    @todos.items.done(bool).each { |item| puts item.name }
   end
 
   def run
@@ -232,7 +228,4 @@ class TooDooApp
   end
 end
 
-todos = TooDooApp.new
-todos.run
-
-# TODO: refactor
+TooDooApp.new.run
